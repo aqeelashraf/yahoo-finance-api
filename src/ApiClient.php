@@ -222,6 +222,38 @@ class ApiClient
         return $this->resultDecoder->transformQuotes($responseBody);
     }
 
+    // Added by Aqeel Ashraf on 2024-01-05
+    /**
+     * Get quotes for one or multiple symbols.
+     *
+     * @return Quote[]
+     */
+    public function getQuoteSummary($symbol, array $modules): array
+    {
+        return $this->fetchQuoteSummary($symbol, $modules);
+    }
+
+    private function fetchQuoteSummary($symbol, array $modules)
+    {
+        $qs = $this->getRandomQueryServer();
+        $cookieJar = new CookieJar();
+
+        // Initialize session cookies
+        $initialUrl = 'https://fc.yahoo.com';
+        $this->client->request('GET', $initialUrl, ['cookies' => $cookieJar, 'http_errors' => false, 'headers' => $this->getHeaders()]);
+
+        // Get crumb value
+        $initialUrl = 'https://query'.$qs.'.finance.yahoo.com/v1/test/getcrumb';
+        $crumb = (string) $this->client->request('GET', $initialUrl, ['cookies' => $cookieJar, 'headers' => $this->getHeaders()])->getBody();
+
+        // Fetch quotes
+        $url = 'https://query'.$qs.'.finance.yahoo.com/v10/finance/quoteSummary/'.$symbol.'?crumb='.$crumb.'&modules='.urlencode(implode(',', $modules));
+        $responseBody = (string) $this->client->request('GET', $url, ['cookies' => $cookieJar, 'headers' => $this->getHeaders()])->getBody();
+        //var_dump($responseBody);
+        //die();
+        return $this->resultDecoder->transformQuoteSummary($responseBody);
+    }
+    
     private function getHistoricalDataResponseBody(string $symbol, string $interval, \DateTimeInterface $startDate, \DateTimeInterface $endDate, string $filter): string
     {
         $qs = $this->getRandomQueryServer();
