@@ -256,6 +256,22 @@ class ResultDecoder
         }, $results);
     }
 
+    public function transformQuoteSummary(string $responseBody): array
+    {
+        $decoded = json_decode($responseBody, true);
+        if (!isset($decoded['quoteSummary']['result']) || !\is_array($decoded['quoteSummary']['result'])) {
+            throw new ApiException('Yahoo Search API returned an invalid result.', ApiException::INVALID_RESPONSE);
+        }
+
+        $results = $decoded['quoteSummary']['result'];
+
+        // Single element is returned directly in "quote"
+        /* return array_map(function (array $item) {
+            return $this->createQuote($item);
+        }, $results); */
+        return $results;
+    }
+
     private function createQuote(array $json): Quote
     {
         $mappedValues = [];
